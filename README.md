@@ -37,7 +37,7 @@ GraphQL Mutation
     ↓
 CarCommands
     ↓
-ImportPipeline
+CreateCarRepairPipeline
     ↓
 Receive
     ↓
@@ -70,7 +70,7 @@ EF Core
 
 ## Dodanie trzeciego serwisu
 
-Dodaj nową implementację `ICarAdapter` i zarejestruj ją w DI. `ImportPipeline`, `CarCommands` i reguły nie wymagają zmian.
+Dodaj nową implementację `ICarAdapter` i zarejestruj ją w DI. `CreateCarRepairPipeline`, `CarCommands` i reguły nie wymagają zmian.
 
 ## Dodanie nowego zestawu reguł
 

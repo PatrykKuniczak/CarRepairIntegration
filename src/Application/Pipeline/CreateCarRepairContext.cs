@@ -4,7 +4,7 @@ namespace Application.Pipeline;
 
 // One context travels through the Pipe & Filter stages.
 // A filter changes only the part of the context it is responsible for.
-public sealed class ImportContext
+public sealed class CreateCarRepairContext
 {
     public required string Source { get; init; }
     public required string Payload { get; init; }
@@ -30,7 +30,7 @@ public sealed record RepairInput(
     decimal Cost,
     string ServiceName);
 
-public interface IImportFilter
+public interface ICreateCarRepairFilter
 {
-    Task ApplyAsync(ImportContext context, CancellationToken cancellationToken);
+    Task ApplyAsync(CreateCarRepairContext context, CancellationToken cancellationToken);
 }

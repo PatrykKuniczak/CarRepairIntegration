@@ -53,12 +53,12 @@ public static class DependencyInjection
         services.AddScoped<CarRuleSetFactory>();
 
         // Pipe & Filter: registration order is the workflow order.
-        services.AddScoped<IImportFilter, ReceiveFilter>();
-        services.AddScoped<IImportFilter, AdaptFilter>();
-        services.AddScoped<IImportFilter, NormalizeFilter>();
-        services.AddScoped<IImportFilter, EvaluateFilter>();
-        services.AddScoped<IImportFilter, PrepareFilter>();
-        services.AddScoped<ImportPipeline>();
+        services.AddScoped<ICreateCarRepairFilter, ReceiveFilter>();
+        services.AddScoped<ICreateCarRepairFilter, AdaptFilter>();
+        services.AddScoped<ICreateCarRepairFilter, NormalizeFilter>();
+        services.AddScoped<ICreateCarRepairFilter, EvaluateFilter>();
+        services.AddScoped<ICreateCarRepairFilter, PrepareFilter>();
+        services.AddScoped<CreateCarRepairPipeline>();
 
         services.AddScoped<DbSeeder>();
         return services;

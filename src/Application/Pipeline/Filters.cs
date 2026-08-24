@@ -5,9 +5,9 @@ using Domain.Entities;
 
 namespace Application.Pipeline;
 
-public sealed class ReceiveFilter : IImportFilter
+public sealed class ReceiveFilter : ICreateCarRepairFilter
 {
-    public Task ApplyAsync(ImportContext context, CancellationToken cancellationToken)
+    public Task ApplyAsync(CreateCarRepairContext context, CancellationToken cancellationToken)
     {
         if (string.IsNullOrWhiteSpace(context.Source))
             throw new InvalidOperationException("Source is required.");
@@ -19,18 +19,18 @@ public sealed class ReceiveFilter : IImportFilter
     }
 }
 
-public sealed class AdaptFilter(CarAdapterFactory factory) : IImportFilter
+public sealed class AdaptFilter(CarAdapterFactory factory) : ICreateCarRepairFilter
 {
-    public Task ApplyAsync(ImportContext context, CancellationToken cancellationToken)
+    public Task ApplyAsync(CreateCarRepairContext context, CancellationToken cancellationToken)
     {
         context.Input = factory.Create(context.Source).Adapt(context.Payload);
         return Task.CompletedTask;
     }
 }
 
-public sealed class NormalizeFilter(UnitNormalizer normalizer) : IImportFilter
+public sealed class NormalizeFilter(UnitNormalizer normalizer) : ICreateCarRepairFilter
 {
-    public Task ApplyAsync(ImportContext context, CancellationToken cancellationToken)
+    public Task ApplyAsync(CreateCarRepairContext context, CancellationToken cancellationToken)
     {
         context.Input = normalizer.Normalize(
             context.Input ?? throw new InvalidOperationException("No adapted input."));
@@ -39,9 +39,9 @@ public sealed class NormalizeFilter(UnitNormalizer normalizer) : IImportFilter
     }
 }
 
-public sealed class EvaluateFilter(CarRuleSetFactory factory) : IImportFilter
+public sealed class EvaluateFilter(CarRuleSetFactory factory) : ICreateCarRepairFilter
 {
-    public Task ApplyAsync(ImportContext context, CancellationToken cancellationToken)
+    public Task ApplyAsync(CreateCarRepairContext context, CancellationToken cancellationToken)
     {
         var input = context.Input
             ?? throw new InvalidOperationException("No normalized input.");
@@ -65,9 +65,9 @@ public sealed class EvaluateFilter(CarRuleSetFactory factory) : IImportFilter
     }
 }
 
-public sealed class PrepareFilter : IImportFilter
+public sealed class PrepareFilter : ICreateCarRepairFilter
 {
-    public Task ApplyAsync(ImportContext context, CancellationToken cancellationToken)
+    public Task ApplyAsync(CreateCarRepairContext context, CancellationToken cancellationToken)
     {
         var car = context.Car
             ?? throw new InvalidOperationException("No evaluated car.");

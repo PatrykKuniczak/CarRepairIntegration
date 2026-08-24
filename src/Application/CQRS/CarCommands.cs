@@ -21,13 +21,13 @@ public sealed record EditCarRepairCommand(
 
 public sealed record EditCarRepairResult(Guid RepairId);
 
-public sealed class CarCommands(ICarWriteStore store, ImportPipeline pipeline)
+public sealed class CarCommands(ICarWriteStore store, CreateCarRepairPipeline pipeline)
 {
     public async Task<CreateCarRepairResult> CreateCarRepairAsync(
         CreateCarRepairCommand command,
         CancellationToken cancellationToken)
     {
-        var context = new ImportContext
+        var context = new CreateCarRepairContext
         {
             Source = command.Source,
             Payload = command.Payload,
