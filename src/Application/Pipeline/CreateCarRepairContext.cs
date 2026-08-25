@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations;
 using Domain.Entities;
 
 namespace Application.Pipeline;
@@ -25,10 +26,10 @@ public sealed record IncomingCarData(
     string Color);
 
 public sealed record RepairInput(
-    string Description,
-    DateTime RepairDate,
-    decimal Cost,
-    string ServiceName);
+    [property: Required] [property: MinLength(1)] string Description,
+    [property: Required] DateTime RepairDate,
+    [property: Range(0.01, 1000000)] decimal Cost,
+    [property: Required] [property: MinLength(1)] string ServiceName);
 
 public interface ICreateCarRepairFilter
 {

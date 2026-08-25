@@ -10,12 +10,6 @@ public sealed class ReceiveFilter : ICreateCarRepairFilter
 {
     public Task ApplyAsync(CreateCarRepairContext context, CancellationToken cancellationToken)
     {
-        if (string.IsNullOrWhiteSpace(context.Source))
-            throw new GraphQLException("Source is required.");
-
-        if (string.IsNullOrWhiteSpace(context.Payload))
-            throw new GraphQLException("Payload is required.");
-
         return Task.CompletedTask;
     }
 }
@@ -40,10 +34,7 @@ public sealed class NormalizeFilter(UnitNormalizer normalizer) : ICreateCarRepai
 {
     public Task ApplyAsync(CreateCarRepairContext context, CancellationToken cancellationToken)
     {
-        if (context.Input is null)
-            throw new GraphQLException("No adapted input.");
-
-        if (!normalizer.TryNormalize(context.Input, out var normalized, out var error))
+        if (!normalizer.TryNormalize(context.Input!, out var normalized, out var error))
             throw new GraphQLException(error ?? "Failed to normalize engine power unit.");
 
         context.Input = normalized;
@@ -55,10 +46,7 @@ public sealed class EvaluateFilter(CarRuleSetFactory factory) : ICreateCarRepair
 {
     public Task ApplyAsync(CreateCarRepairContext context, CancellationToken cancellationToken)
     {
-        var input = context.Input;
-        if (input is null)
-            throw new GraphQLException("No normalized input.");
-
+        var input = context.Input!;
         var car = new Car
         {
             Id = Guid.NewGuid(),
@@ -86,10 +74,7 @@ public sealed class PrepareFilter : ICreateCarRepairFilter
 {
     public Task ApplyAsync(CreateCarRepairContext context, CancellationToken cancellationToken)
     {
-        var car = context.Car;
-        if (car is null)
-            throw new GraphQLException("No evaluated car.");
-
+        var car = context.Car!;
         context.PreparedRepair = new CarRepair
         {
             Id = Guid.NewGuid(),
