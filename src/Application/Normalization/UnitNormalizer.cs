@@ -11,18 +11,29 @@ public interface IUnitConversionStrategy
 
 public sealed class UnitNormalizer(IEnumerable<IUnitConversionStrategy> strategies)
 {
-    public IncomingCarData Normalize(IncomingCarData input)
+    public bool TryNormalize(IncomingCarData input, out IncomingCarData? normalized, out string? error)
     {
         if (input.EnginePowerUnit.Equals("km", StringComparison.OrdinalIgnoreCase))
-            return input with { EnginePowerUnit = "km" };
+        {
+            normalized = input with { EnginePowerUnit = "km" };
+            error = null;
+            return true;
+        }
 
-        var strategy = strategies.FirstOrDefault(x => x.CanHandle(input.EnginePowerUnit))
-            ?? throw new InvalidOperationException($"Unsupported engine unit: {input.EnginePowerUnit}");
+        var strategy = strategies.FirstOrDefault(x => x.CanHandle(input.EnginePowerUnit));
+        if (strategy is null)
+        {
+            normalized = null;
+            error = $"Unsupported engine power unit: '{input.EnginePowerUnit}'.";
+            return false;
+        }
 
-        return input with
+        normalized = input with
         {
             EnginePower = strategy.ConvertToKm(input.EnginePower),
             EnginePowerUnit = "km"
         };
+        error = null;
+        return true;
     }
 }

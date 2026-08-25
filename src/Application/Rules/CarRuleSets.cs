@@ -13,7 +13,6 @@ public interface ICarRuleSet
 // Factory keeps rule selection out of the pipeline implementation.
 public sealed class CarRuleSetFactory(IEnumerable<ICarRuleSet> ruleSets)
 {
-    public ICarRuleSet Create(string name) =>
-        ruleSets.FirstOrDefault(x => x.Name.Equals(name, StringComparison.OrdinalIgnoreCase))
-        ?? throw new InvalidOperationException($"Unknown rule set: {name}");
+    public ICarRuleSet? GetRuleSet(string name) =>
+        ruleSets.FirstOrDefault(x => x.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
 }

@@ -1,5 +1,6 @@
 using Application.Persistence;
 using Application.Pipeline;
+using HotChocolate;
 
 namespace Application.CQRS;
 
@@ -37,19 +38,24 @@ public sealed class CarCommands(ICarWriteStore store, CreateCarRepairPipeline pi
 
         await pipeline.RunAsync(context, cancellationToken);
 
-        var car = context.Car ?? throw new InvalidOperationException("Pipeline did not create a car.");
-        var repair = context.PreparedRepair
-            ?? throw new InvalidOperationException("Pipeline did not prepare a repair.");
+        if (context.Car is null || context.PreparedRepair is null)
+            throw new GraphQLException("Pipeline failed to create a car or prepare a repair.");
 
-        await store.AddAsync(car, repair, cancellationToken);
-        return new(car.Id, repair.Id);
+        await store.AddAsync(context.Car, context.PreparedRepair, cancellationToken);
+        return new CreateCarRepairResult(context.Car.Id, context.PreparedRepair.Id);
     }
 
     public async Task<EditCarRepairResult> EditCarRepairAsync(
         EditCarRepairCommand command,
         CancellationToken cancellationToken)
     {
-        await store.UpdateRepairAsync(command, cancellationToken);
-        return new(command.Id);
+        if (command.Id == Guid.Empty)
+            throw new GraphQLException("Repair Id is required.");
+
+        var updated = await store.UpdateRepairAsync(command, cancellationToken);
+        if (!updated)
+            throw new GraphQLException($"Repair '{command.Id}' was not found.");
+
+        return new EditCarRepairResult(command.Id);
     }
 }

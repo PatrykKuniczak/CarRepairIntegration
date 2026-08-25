@@ -7,5 +7,5 @@ namespace Application.Persistence;
 public interface ICarWriteStore
 {
     Task AddAsync(Car car, CarRepair repair, CancellationToken cancellationToken);
-    Task UpdateRepairAsync(EditCarRepairCommand command, CancellationToken cancellationToken);
+    Task<bool> UpdateRepairAsync(EditCarRepairCommand command, CancellationToken cancellationToken);
 }

@@ -13,12 +13,13 @@ public sealed class CarWriteStore(AppDbContext db) : ICarWriteStore
         await db.SaveChangesAsync(cancellationToken);
     }
 
-    public async Task UpdateRepairAsync(
+    public async Task<bool> UpdateRepairAsync(
         EditCarRepairCommand command,
         CancellationToken cancellationToken)
     {
-        var repair = await db.CarRepairs.FindAsync([command.Id], cancellationToken)
-                     ?? throw new KeyNotFoundException($"Repair '{command.Id}' was not found.");
+        var repair = await db.CarRepairs.FindAsync([command.Id], cancellationToken);
+        if (repair is null)
+            return false;
 
         repair.Description = command.Description;
         repair.RepairDate = command.RepairDate;
@@ -26,5 +27,6 @@ public sealed class CarWriteStore(AppDbContext db) : ICarWriteStore
         repair.ServiceName = command.ServiceName;
 
         await db.SaveChangesAsync(cancellationToken);
+        return true;
     }
 }

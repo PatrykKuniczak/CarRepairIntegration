@@ -2,6 +2,7 @@ using Application.Adapters;
 using Application.Normalization;
 using Application.Rules;
 using Domain.Entities;
+using HotChocolate;
 
 namespace Application.Pipeline;
 
@@ -10,10 +11,10 @@ public sealed class ReceiveFilter : ICreateCarRepairFilter
     public Task ApplyAsync(CreateCarRepairContext context, CancellationToken cancellationToken)
     {
         if (string.IsNullOrWhiteSpace(context.Source))
-            throw new InvalidOperationException("Source is required.");
+            throw new GraphQLException("Source is required.");
 
         if (string.IsNullOrWhiteSpace(context.Payload))
-            throw new InvalidOperationException("Payload is required.");
+            throw new GraphQLException("Payload is required.");
 
         return Task.CompletedTask;
     }
@@ -23,7 +24,14 @@ public sealed class AdaptFilter(CarAdapterFactory factory) : ICreateCarRepairFil
 {
     public Task ApplyAsync(CreateCarRepairContext context, CancellationToken cancellationToken)
     {
-        context.Input = factory.Create(context.Source).Adapt(context.Payload);
+        var adapter = factory.GetAdapter(context.Source);
+        if (adapter is null)
+            throw new GraphQLException($"Unsupported source: '{context.Source}'.");
+
+        if (!adapter.TryAdapt(context.Payload, out var input, out var error))
+            throw new GraphQLException(error ?? $"Failed to adapt payload for source '{context.Source}'.");
+
+        context.Input = input;
         return Task.CompletedTask;
     }
 }
@@ -32,9 +40,13 @@ public sealed class NormalizeFilter(UnitNormalizer normalizer) : ICreateCarRepai
 {
     public Task ApplyAsync(CreateCarRepairContext context, CancellationToken cancellationToken)
     {
-        context.Input = normalizer.Normalize(
-            context.Input ?? throw new InvalidOperationException("No adapted input."));
+        if (context.Input is null)
+            throw new GraphQLException("No adapted input.");
 
+        if (!normalizer.TryNormalize(context.Input, out var normalized, out var error))
+            throw new GraphQLException(error ?? "Failed to normalize engine power unit.");
+
+        context.Input = normalized;
         return Task.CompletedTask;
     }
 }
@@ -43,8 +55,9 @@ public sealed class EvaluateFilter(CarRuleSetFactory factory) : ICreateCarRepair
 {
     public Task ApplyAsync(CreateCarRepairContext context, CancellationToken cancellationToken)
     {
-        var input = context.Input
-            ?? throw new InvalidOperationException("No normalized input.");
+        var input = context.Input;
+        if (input is null)
+            throw new GraphQLException("No normalized input.");
 
         var car = new Car
         {
@@ -56,9 +69,13 @@ public sealed class EvaluateFilter(CarRuleSetFactory factory) : ICreateCarRepair
             Color = input.Color
         };
 
-        var rules = factory.Create(context.RuleSet).Rules;
+        var ruleSet = factory.GetRuleSet(context.RuleSet);
+        if (ruleSet is null)
+            throw new GraphQLException($"Unknown rule set: '{context.RuleSet}'.");
+
+        var rules = ruleSet.Rules;
         if (!rules.IsSatisfiedBy(car))
-            throw new InvalidOperationException($"Car does not satisfy rule set '{context.RuleSet}'.");
+            throw new GraphQLException($"Car does not satisfy rule set '{context.RuleSet}'.");
 
         context.Car = car;
         return Task.CompletedTask;
@@ -69,8 +86,9 @@ public sealed class PrepareFilter : ICreateCarRepairFilter
 {
     public Task ApplyAsync(CreateCarRepairContext context, CancellationToken cancellationToken)
     {
-        var car = context.Car
-            ?? throw new InvalidOperationException("No evaluated car.");
+        var car = context.Car;
+        if (car is null)
+            throw new GraphQLException("No evaluated car.");
 
         context.PreparedRepair = new CarRepair
         {
